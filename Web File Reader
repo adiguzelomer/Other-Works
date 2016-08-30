@@ -1,0 +1,11 @@
+# Web File Reader
+b <- read.delim2(url("http://archive.ics.uci.edu/ml/machine-learning-databases/00290/eb.arff"), 
+                header = FALSE, sep = ",", dec = ".", 
+                as.is = TRUE,
+                blank.lines.skip = TRUE, stringsAsFactors = TRUE, skip = 14, allowEscapes = TRUE, fill = TRUE,
+                comment.char = "\t", 
+                numerals = c("allow.loss", "warn.loss", "no.loss"))
+View(b)
+
+install.packages("tm")
+install.packages("Snowball")
