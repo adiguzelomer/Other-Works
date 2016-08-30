@@ -1,0 +1,119 @@
+# Maven a giden dosya çalışması
+
+crm <- read.csv("D:/Users/26000215/Desktop/SmartTvLast.csv", 
+                header = TRUE, sep = "|", 
+                dec = ".", row.names = NULL, stringsAsFactors = TRUE)
+
+
+library(dplyr)
+library(plyr)
+
+
+crm1 <- mutate(crm, toplam = crm$Total/3600)
+
+library(openxlsx)
+write.xlsx(crm, file = "D:/Users/26000215/Desktop/SmartTV_14.07.2016.xlsx", col.names = TRUE, row.names = FALSE, showNA = TRUE)
+
+
+library(dplyr)
+library(tidyr)
+crm1 <- lapply(crm[2:22], function(x) x/3600)
+View(crm2)
+crm2 <- format(round(data.frame(crm1),2), nsmall = 2)
+str(crm1)
+
+
+crm3 <- aggregate(crm$Total, crm1)
+help(rjson)
+
+
+
+install.packages("rjson", "D:/Users/26000215/Desktop")
+
+library(rjson)
+library(jsonlite)
+json_data <- (fromJSON(file = "D:/Users/26000215/Desktop/user_profile.json", simplifyVector = TRUE, flatten = TRUE, simplifyDataFrame = TRUE ))
+
+maven <- read.csv2(file = "D:/Users/26000215/Desktop/user_profile.csv", header = TRUE, sep = ",", dec = ".")
+View(maven)
+
+test <- split(maven, sample(1:10, nrow(maven), replace=T) )
+
+library(openxlsx)
+library(xlsx)
+write.xlsx(maven, "maven1.xlsx", nrow(5), asTable = T)
+write.xlsx(test$`1`, "D:/Users/26000215/Desktop/mydata.xlsx", asTable = T, append = TRUE)
+
+
+install.packages("glmnet")
+
+
+library(ggplot2)
+
+a <- group_by(maven, date)
+
+library(dplyr)
+
+summarise(maven, avg = mean(total))
+
+sum(as.numeric(maven$total))
+
+View(a)
+
+maven %>%
+  gather(-total, key = "var", value = "value") %>%
+  ggplot(aes(x = value, y = total)) +
+  geom_point() +
+  stat_smooth() +
+  facet_wrap(~ var, scales = "free") +
+  theme_bw()
+
+View(b)
+
+b <- sqldf('select date, sum(total) from maven group by date ')
+
+sum(as.numeric(b$`sum(total)`))
+
+
+library(dplyr)
+glimpse(maven)
+
+plot(maven$channel_name, maven$total)
+
+library(tseries)
+maven2 <- mutate(maven, hour = as.numeric(maven$total) / 3600)
+
+maven2 %>% group_by(date) %>% mutate(maven2, sum(maven2))
+
+plot(maven2$hour, type="l", lwd=2, col="red", xlab="time", ylab="Watch Duration(hours)", main="Smart TV" )
+
+library(dplyr)
+a <- data.frame(filter(maven, maven$channel_name == '2016-05-01'))
+b <- filter(maven, maven$channel_name == '2016-05-02')
+c <- filter(maven, maven$channel_name == '2016-05-03')
+d <- filter(maven, maven$channel_name == '2016-05-04')
+e <- filter(maven, maven$channel_name == '2016-05-05')
+f <- filter(maven, maven$channel_name == '2016-05-06')
+g <- filter(maven, maven$channel_name == '2016-05-07')
+h <- filter(maven, maven$channel_name == '2016-05-08')
+i <- filter(maven, maven$channel_name == '2016-05-09')
+j <- filter(maven, maven$channel_name == '2016-05-10')
+
+library(reshape)
+library(reshape2)
+
+#DROP COLUMN
+a$date = NULL
+b$date = NULL
+c$date = NULL
+d$date = NULL
+e$date = NULL
+f$date = NULL
+g$date = NULL
+h$date = NULL
+i$date = NULL
+j$date = NULL
+
+a <- summarise(a, sum(a$X02.00.06.00), sum(a$X06.00.10.00), sum(a$X10.00.16.30), sum(a$X16.30.19.30), sum(a$X19.30.23.00), sum(a$X23.00.02.00))
+
+
