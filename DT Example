@@ -1,0 +1,36 @@
+# DT Example
+library(rpart)
+data("kyphosis")
+View(kyphosis)
+
+# grow tree 
+fit <- rpart(Kyphosis ~ Age + Number + Start,
+             method="class", data=kyphosis)
+printcp(fit) # display the results 
+plotcp(fit) # visualize cross-validation results
+summary(fit) # detailed summary of splits
+# plot tree 
+plot(fit, uniform=TRUE, 
+     main="Classification Tree for Kyphosis")
+text(fit, use.n=TRUE, all=TRUE, cex=.8)
+View(cu.summary)
+
+# grow tree 
+fit2 <- rpart(Mileage~Price + Country + Reliability + Type, 
+             method="anova", data=cu.summary)
+printcp(fit2) # display the results
+plotcp(fit2) # visualize cross-validation results
+summary(fit2) # detailed summary of splits
+par(mfrow=c(1,2)) # two plots on one page
+rsq.rpart(fit2) # visualize cross-validation results  
+
+# plot tree 
+plot(fit2, uniform=TRUE, 
+     main="Regression Tree for Mileage ")
+text(fit2, use.n=TRUE, all=TRUE, cex=.8)
+
+library(randomForest)
+# Random Forest prediction of Kyphosis data
+fit <- randomForest(Kyphosis ~ Age + Number + Start,   data=kyphosis)
+print(fit) # view results 
+importance(fit) # importance of each predictor
