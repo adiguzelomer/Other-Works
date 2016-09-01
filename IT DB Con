@@ -15,4 +15,32 @@ toJSON(x = "omar.json", (split(b, 1:nrow(b))), na = NULL)
 
 write.table(b, "mydata.txt", eol = "\r",sep = "|", na = "NULL", dec = ".",col.names = TRUE, row.names = TRUE)
 
+library(RODBC)
+a <- odbcDriverConnect('driver={SQL Server};server=MRKSQLDB1;database=CRMTRANSFER')
+
+b <- sqlFetch(a, sqtable = "dbo.BASVURU", colnames = FALSE, rownames = FALSE, max = 1000000, rows_at_time = 100)
+
+c <- sqlFetch(a, sqtable = "dbo.BASVURU", colnames = FALSE, rownames = FALSE, rows_at_time = 100)
+
+c <- sqlFetch(a, sqtable = "dbo.MUSTERI", colnames = FALSE, rownames = FALSE, rows_at_time = 100)
+
+library(jsonlite)
+toJSON(x = "omar.json", (split(b, 1:nrow(b))), na = NULL)
+
+#;uid=C9005519;pwd=fT50tzvl'
+
+write.table(b, "mydata.txt", eol = "\r",sep = "|", na = "NULL", dec = ".",col.names = TRUE, row.names = TRUE)
+
+
+library(sqldf)
+
+montaj <- sqldf(' select * from c where BASVURU_NEDENI LIKE "%Montaj%"')
+
+ariza <- sqldf(' select * from c where BASVURU_NEDENI NOT LIKE "%Montaj%"')
+
+TvMontaj <- sqldf(' select * from montaj where MODEL_KODU NOT IN (27373, 28993)')
+OKCMontaj <- sqldf(' select * from montaj where MODEL_KODU IN (27373, 28993)')
+
+Tvariza <- sqldf(' select * from ariza where MODEL_KODU NOT IN (27373, 28993)')
+OKCariza <- sqldf(' select * from ariza where MODEL_KODU NOT IN (27373, 28993)')
 
