@@ -1,0 +1,31 @@
+if((asd$Jan[asd$Year == "2015"] == 0 & asd$Jan[asd$Year == "2016"] == 0))
+      {
+        0
+      } else { seasonal$Jan[1] <- sum(asd$Jan) / nrow(asd)}
+
+
+
+
+
+
+isim <- "829053"
+departman <- "Product"
+butce_kalemi <- "Capital Charges"
+
+asd <- as.data.frame(subset(sondamla2, Cost.Center == isim & Department == departman & Cost.Summary.Key == butce_kalemi))
+
+asd[,6:17] <- lapply(asd[,6:17], as.numeric)
+
+seasonal <- matrix(0, 1, 17)
+colnames(seasonal) <- colnames(asd)
+seasonal <- as.data.frame(seasonal)
+seasonal <- seasonal[,-1]
+
+
+
+Year	Cost Center	Cost Summary Key	Fix-Var	Jan	Feb	Mar	Apr	May	Jun	July	Aug	Sep	Oct	Nov	Dec
+2013	829053	Capital Charges	Var	0.000000	0.0000000	0.00	0.00	0	0.242	0.5720	0.2860000	0.59400000	0.0000000	0.6820000	0.4180000
+2014	829053	Capital Charges	Capital Charges	0.784142	-0.6679728	0.00	0.00	0	0.000	0.0000	0.3194653	-0.05808459	0.5227613	0.2323384	0.3775498
+2015	829053	Capital Charges	Capital Charges	0.280000	0.2900000	0.44	0.44	0	0.360	0.3700	0.5900000	167.000.000	10.000.000	0.3300000	17.500.000
+2016	829053	Capital Charges	Capital Charges	1.430.000	14.300.000	Oca.68	Oca.79	0	-6.340	0.0000	0.0000000	0.00000000	0.0000000	282.000.000	0.0000000
+2017	829053	Capital Charges	Capital Charges	0.000000	0.0000000	0.00	0.00	0	0.000	0.0417	0.0000000	0.00000000	0.0000000	0.0000000	0.0000000
