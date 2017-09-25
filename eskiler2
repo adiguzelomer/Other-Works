@@ -1,0 +1,141 @@
+library(R.matlab)
+
+gc()
+
+patient_names <- c("Asli_Ozge_Yildirim", "Ayse_Bagci", "Bulent_Danis",
+                   "Burcu_Ongun", "Cagla_Keskin", "Ceyda_Erturk", 
+                   "Derya_Deniz_Demir", "Elide_Pamukcu", "Fatma_Demir",
+                   "Gamze_Aslan_Duman", "Gamze_Cinar", "Gulay_Suren",
+                   "Gullu_Kurekli", "Ihsan_Solaroglu", "Mehmet_Ercan_Tekin",
+                   "Mert_Saygili", "Murvet_Ozyurt", "Nigar_Temizkan",
+                   "Nurhan_Taskin", "Okan_Cetinkaya", "Olgun_Turkyilmaz", 
+                   "Onder_Araz", "Seval_Dincler", "Pakize_Yazicioglu",
+                   "Sanem_Comez", "Sehmuz_Yuksel", "Selcan_Simsek",
+                   "Selma_Temizkan", "Seyma_Arslan", "Sibel_Armut", 
+                   "Suleyman_Das", "Taskin_Degirmenci", "Topey_Korkmaz",
+                   "Volkan_Ayvaz", "Aysel_Gurgen", "Durdane_Gurgen")
+IncrementalTable <- c()
+#sdnn_IncrementTable <- matrix(0, 50000, 1)
+for (patient_name in patient_names[16]) {
+  careme <- readMat(sprintf("D:/Users/26000215/Desktop/data/%s_CareMe.mat", patient_name))
+  frequency <- as.numeric(careme$raw[[which(rownames(careme$raw) == "Sampling Rate")]])
+  careme_beats <- as.numeric(careme$raw[[which(rownames(careme$raw) == "ANN")]])
+  a <- sum(careme$raw[[which(rownames(careme$raw) == "ANN")]] ==1)
+  careme <- NULL
+  
+  holter <- readMat(sprintf("D:/Users/26000215/Desktop/data/%s_Holter.mat", patient_name))
+  temp <- round(as.numeric(holter$beatpos[holter$beats != 1500]) * frequency)
+  x <- length(which(holter$beats == 10))
+  y <- length(which(holter$beats == 3))
+  z <- length(holter$beats)
+  holter_beats <- rep(0, max(temp))
+  holter_beats[temp] <- 1
+  holter <- NULL
+  
+  alignment_window_careme <- length(careme_beats)/frequency
+  
+  bps_careme <- rep(0, alignment_window_careme)
+  for (i in 1:alignment_window_careme) {
+    start <- (i - 1) * frequency + 1
+    finish <- i * frequency
+    bps_careme[i] <- sum(careme_beats[start:finish])
+  }
+  
+  alignment_window_holter <- length(holter_beats)/frequency
+  
+  bps_holter <- rep(0, alignment_window_holter)
+  for (i in 1:alignment_window_holter) {
+    start <- (i - 1) * frequency + 1
+    finish <- i * frequency
+    bps_holter[i] <- sum(holter_beats[start:finish])
+  }
+  
+  d <- ccf(bps_holter, bps_careme, lag.max = max(alignment_window_careme, alignment_window_holter))
+  res <- data.frame(cor = d$acf[,,1], lag = d$lag[,,1])
+  time_lag <- res[which.max(res$cor), "lag"]
+  
+  if (time_lag < 0) {
+    careme_beats <- careme_beats[-(1:(abs(time_lag) * frequency))] 
+  }
+  if (time_lag > 0) {
+    holter_beats <- holter_beats[-(1:(time_lag * frequency))] 
+  }
+  
+  total_window <- floor(min(length(careme_beats), length(holter_beats)) / frequency / 60)
+  
+  bpm_careme <- rep(0, total_window)
+  sdnn_careme <- rep(0, total_window)
+  for (i in 1:total_window) {
+    start <- (i - 1) * 60 * frequency + 1
+    finish <- i * 60 * frequency
+    bpm_careme[i] <- sum(careme_beats[start:finish])
+    r_positions <- which(careme_beats[start:finish] == 1)
+    sdnn_careme[i] <- sd((r_positions[-1] - r_positions[-length(r_positions)]) * 1000 / frequency)
+  }
+  
+  bpm_holter <- rep(0, total_window)
+  sdnn_holter <- rep(0, total_window)
+  for (i in 1:total_window) {
+    start <- (i - 1) * 60 * frequency + 1
+    finish <- i * 60 * frequency
+    bpm_holter[i] <- sum(holter_beats[start:finish])
+    r_positions <- which(holter_beats[start:finish] == 1)
+    sdnn_holter[i] <- sd((r_positions[-1] - r_positions[-length(r_positions)]) * 1000 / frequency)
+  }
+  
+  pdf(file = sprintf("d:/users/26000215/Desktop/results_SDNN_300ms/%s_Holter_vs_CareMe_series.pdf", patient_name), width = 10, height = 5)
+  plot(1:length(bpm_holter), bpm_holter, type = "l", col = "blue", ylab = "Beats per minute", xlab = "Time (min)", main = patient_name, las = 1, xpd = TRUE)
+  points(1:length(bpm_careme), bpm_careme, type = "l", col = "red")
+  legend(x = "topright", legend = c("Holter", "CareMe"), col = c("blue", "red"), lty = 1, lwd = 2)
+  
+  y_min <- par("usr")[3]
+  y_max <- par("usr")[4]
+  
+  #SNDD filter 300ms
+  invalid_ones_300ms <- which(is.na(sdnn_careme) == TRUE | is.na(sdnn_holter) == TRUE | sdnn_careme > 300 | sdnn_holter > 300 | bpm_careme < 30 | bpm_holter < 30)
+  holter_invalid_ones_300ms <- which(is.na(sdnn_holter) == TRUE | sdnn_holter > 300 | bpm_holter < 30)
+  careme_invalid_ones_300ms <- which(is.na(sdnn_careme) == TRUE | sdnn_careme > 300 | bpm_careme < 30)
+
+  
+  
+  for(invalid in invalid_ones_300ms) {
+    rect(xleft = invalid - 0.5, xright = invalid + 0.5, ybottom = y_min, ytop = y_max, 
+         col = rgb(230, 85, 13, 125, names = NULL, maxColorValue = 255), border = NA)
+  }
+  
+  #max_holter_index <- which(bpm_holter == max(bpm_holter))[1]
+  #points(max_holter_index, max(bpm_holter), pch = 19, cex = 2, col = "blue")
+  #text(x = max_holter_index + 50, y = max(bpm_holter), labels = max(bpm_holter), col = "blue", xpd = TRUE)
+  
+  #min_holter_index <- which(bpm_holter == min(bpm_holter))[1]
+  #points(min_holter_index, min(bpm_holter), pch = 19, cex = 2, col = "blue")
+  #text(x = min_holter_index + 50, y = min(bpm_holter), labels = min(bpm_holter), col = "blue", xpd = TRUE)
+  
+  #max_careme_index <- which(bpm_careme == max(bpm_careme))[1]
+  #points(max_careme_index, max(bpm_careme), pch = 19, cex = 2, col = "red")
+  #text(x = max_careme_index - 50, y = max(bpm_careme), labels = max(bpm_careme), col = "red", xpd = TRUE)
+  
+  #min_careme_index <- which(bpm_careme == min(bpm_careme))[1]
+  #points(min_careme_index, min(bpm_careme), pch = 19, cex = 2, col = "red")
+  #text(x = min_careme_index - 50, y = min(bpm_careme), labels = min(bpm_careme), col = "red", xpd = TRUE)
+  
+  dev.off()
+  
+  pdf(file = sprintf("d:/users/26000215/Desktop/results_SDNN_300ms/%s_Holter_vs_CareMe_comparison.pdf", patient_name), width = 5, height = 5)
+  if (length(invalid_ones_300ms) > 0)
+  {
+    plot(bpm_holter[-invalid_ones_300ms], bpm_careme[-invalid_ones_300ms],
+         type = "p", col = "blue", pch = 16, cex = 0.5, xlab = "Beats per minute (Holter)",
+         ylab =  "Beats per minute (CareMe)", main = sprintf("%s(%.4f)",  patient_name, 
+                                                             cor(bpm_holter[-invalid_ones_300ms], 
+                                                                 bpm_careme[-invalid_ones_300ms])), las = 1)
+  }  else  {
+    plot(bpm_holter, bpm_careme, type = "p", col = "blue", pch = 16, cex = 0.5, 
+         xlab = "Beats per minute (Holter)", ylab = "Beats per minute (CareMe)", 
+         main = sprintf("%s (%.4f)", patient_name, cor(bpm_holter, bpm_careme)), las = 1)
+    
+  }
+  dev.off()
+  
+
+}
